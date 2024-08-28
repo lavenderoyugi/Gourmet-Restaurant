@@ -6,7 +6,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 # Function to load data
 @st.cache_data
 def load_data():
-    file_path = '/mnt/data/datamission.csv'  # Replace with your actual data path
+    file_path = 'data/datamission.csv'  # Replace with the relative path to your data file
     data = pd.read_csv(file_path)
     return data
 

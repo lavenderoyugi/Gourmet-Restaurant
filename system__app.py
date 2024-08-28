@@ -2,32 +2,34 @@ import streamlit as st
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
+from geopy.distance import great_circle
+import numpy as np
+import requests
+
+# Define currency conversion rates (example rates, should be updated or replaced with an API)
+CURRENCY_CONVERSIONS = {
+    'USD': 1.0,      # Base currency (USD)
+    'EUR': 0.93,     # Example conversion rate from USD to EUR
+    'GBP': 0.75,     # Example conversion rate from USD to GBP
+    # Add more currencies and conversion rates as needed
+}
 
 # Function to load data
 @st.cache_data
 def load_data():
     file_path = 'https://raw.githubusercontent.com/Lovelylove03/Gourmet-Restaurant/main/datamission.csv'  
     data = pd.read_csv(file_path)
-    return data  # Added return statement to return the data
+    return data
 
 # Function to preprocess data for similarity calculation
 def preprocess_data(data):
-    # 1. Handling `PhoneNumber` (3.01% missing)
-    # Impute missing values with 'Not Available' or a placeholder for phone numbers
+    # Handling missing values
     data['PhoneNumber'].fillna('Not Available', inplace=True)
-
-    # 2. Handling `WebsiteUrl` (16.95% missing)
-    # Impute missing values with 'No Website' or another appropriate value
     data['WebsiteUrl'].fillna('No Website', inplace=True)
-
-    # 3. Handling `FacilitiesAndServices` (5.27% missing)
-    # You can fill with 'None' if the missing value implies no facilities or services listed
     data['FacilitiesAndServices'].fillna('None', inplace=True)
-
-    # 4. Handling `Description` (0.02% missing)
-    # Since it's a very small percentage, you could drop the rows or fill with 'No Description'
     data['Description'].fillna('No Description', inplace=True)
 
+    # Create a combined feature for similarity calculation
     data['Combined'] = data['Cuisine'] + ' ' + data['Price'] + ' ' + data['Location']
     return data
 
@@ -68,6 +70,26 @@ def recommend_restaurants(data, cuisine_preference, price_range, location_prefer
     
     return recommended_restaurants
 
+# Function to filter restaurants by proximity to a given location
+def filter_by_location(data, user_lat, user_lon, radius_km=10):
+    def is_within_radius(row):
+        return great_circle((user_lat, user_lon), (row['Latitude'], row['Longitude'])).kilometers <= radius_km
+    
+    return data[data.apply(is_within_radius, axis=1)]
+
+# Function to format price based on selected currency
+def format_price(price, currency):
+    if currency in CURRENCY_CONVERSIONS:
+        converted_price = price * CURRENCY_CONVERSIONS[currency]
+        return f"{converted_price:.2f} {currency}"
+    return f"{price:.2f} USD"  # Default to USD if currency is not found
+
+# Function to get latitude and longitude from location (Placeholder function)
+def get_lat_lon_from_location(location):
+    # Placeholder for actual geocoding implementation
+    # Example: Use a geocoding API to get latitude and longitude from location string
+    return 43.2965, 5.3698  # Example coordinates for Marseille, France
+
 # Streamlit App
 def main():
     st.title("Gourmet Restaurant Recommendation System")
@@ -79,8 +101,16 @@ def main():
     # User Inputs
     st.sidebar.header('Customize Your Search')
     cuisine_preference = st.sidebar.selectbox("Choose Cuisine Type", data['Cuisine'].unique())
+    currency = st.sidebar.selectbox("Choose Currency", list(CURRENCY_CONVERSIONS.keys()))
     price_range = st.sidebar.selectbox("Choose Price Range", data['Price'].unique())
     location_preference = st.sidebar.selectbox("Choose Location", data['Location'].unique())
+    
+    # User location input for proximity filter
+    user_location = st.sidebar.text_input("Enter Your Location (e.g., Marseille, France)")
+    
+    if user_location:
+        user_lat, user_lon = get_lat_lon_from_location(user_location)  # Implement this function
+        data = filter_by_location(data, user_lat, user_lon)
     
     # Recommend Restaurants
     if st.sidebar.button("Get Recommendations"):
@@ -88,14 +118,13 @@ def main():
         if not recommendations.empty:
             for i, row in recommendations.iterrows():
                 st.subheader(row['Name'])
-                # Placeholder for images (ensure these links are valid or use placeholder images)
-                st.image("https://docs.developer.yelp.com/docs/fusion-intro")
-                st.image("https://www.google.com/maps/search/Restaurants/@-33.8673317,151.1921221,15z/data=!3m1!4b1!4m7!2m6!3m5!2sGoogle+Sydney+-+Pirrama+Road!3s0x6b12ae37b47f5b37:0x8eaddfcd1b32ca52!4m2!1d151.1958561!2d-33.866489?entry=ttu&g_ep=EgoyMDI0MDgyMy4wIKXMDSoASAFQAw%3D%3D")  
                 st.write(f"Cuisine: {row['Cuisine']}")
-                st.write(f"Price: {row['Price']}")
+                st.write(f"Price: {format_price(float(row['Price'].replace('USD', '').replace(',', '').strip())), currency}")  # Assuming 'Price' contains 'USD'
                 st.write(f"Location: {row['Location']}")
                 st.write(f"Award: {row['Award']}")
-                st.write(f"Phone: {row.get('PhoneNumber', 'N/A')}")  # Changed 'Phone' to 'PhoneNumber'
+                st.write(f"Phone: {row.get('PhoneNumber', 'N/A')}")
+                st.write(f"Description: {row['Description']}")
+                st.write(f"Facilities and Services: {row['FacilitiesAndServices']}")
                 st.map(pd.DataFrame([[row['Latitude'], row['Longitude']]], columns=['lat', 'lon']))
 
 if __name__ == '__main__':

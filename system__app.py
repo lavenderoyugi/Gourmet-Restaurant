@@ -14,7 +14,7 @@ def load_data():
 def preprocess_data(data):
 # 1. Handling `PhoneNumber` (3.01% missing)
 # Impute missing values with 'Not Available' or a placeholder for phone numbers
-data['PhoneNumber'].fillna('Not Available', inplace=True)
+     data['PhoneNumber'].fillna('Not Available', inplace=True)
 
 # 2. Handling `WebsiteUrl` (16.95% missing)
 # Impute missing values with 'No Website' or another appropriate value

@@ -8,27 +8,27 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 def load_data():
     file_path = 'https://raw.githubusercontent.com/Lovelylove03/Gourmet-Restaurant/main/datamission.csv'  
     data = pd.read_csv(file_path)
-
+    return data  # Added return statement to return the data
 
 # Function to preprocess data for similarity calculation
 def preprocess_data(data):
-# 1. Handling `PhoneNumber` (3.01% missing)
-# Impute missing values with 'Not Available' or a placeholder for phone numbers
-     data['PhoneNumber'].fillna('Not Available', inplace=True)
+    # 1. Handling `PhoneNumber` (3.01% missing)
+    # Impute missing values with 'Not Available' or a placeholder for phone numbers
+    data['PhoneNumber'].fillna('Not Available', inplace=True)
 
-# 2. Handling `WebsiteUrl` (16.95% missing)
-# Impute missing values with 'No Website' or another appropriate value
-data['WebsiteUrl'].fillna('No Website', inplace=True)
+    # 2. Handling `WebsiteUrl` (16.95% missing)
+    # Impute missing values with 'No Website' or another appropriate value
+    data['WebsiteUrl'].fillna('No Website', inplace=True)
 
-# 3. Handling `FacilitiesAndServices` (5.27% missing)
-# You can fill with 'None' if the missing value implies no facilities or services listed
-data['FacilitiesAndServices'].fillna('None', inplace=True)
+    # 3. Handling `FacilitiesAndServices` (5.27% missing)
+    # You can fill with 'None' if the missing value implies no facilities or services listed
+    data['FacilitiesAndServices'].fillna('None', inplace=True)
 
-# 4. Handling `Description` (0.02% missing)
-# Since it's a very small percentage, you could drop the rows or fill with 'No Description'
-data['Description'].fillna('No Description', inplace=True)
+    # 4. Handling `Description` (0.02% missing)
+    # Since it's a very small percentage, you could drop the rows or fill with 'No Description'
+    data['Description'].fillna('No Description', inplace=True)
 
-data['Combined'] = data['Cuisine'] + ' ' + data['Price'] + ' ' + data['Location']
+    data['Combined'] = data['Cuisine'] + ' ' + data['Price'] + ' ' + data['Location']
     return data
 
 # Function to recommend restaurants based on user preferences
@@ -88,14 +88,14 @@ def main():
         if not recommendations.empty:
             for i, row in recommendations.iterrows():
                 st.subheader(row['Name'])
-                # Placeholder for images
+                # Placeholder for images (ensure these links are valid or use placeholder images)
                 st.image("https://docs.developer.yelp.com/docs/fusion-intro")
                 st.image("https://www.google.com/maps/search/Restaurants/@-33.8673317,151.1921221,15z/data=!3m1!4b1!4m7!2m6!3m5!2sGoogle+Sydney+-+Pirrama+Road!3s0x6b12ae37b47f5b37:0x8eaddfcd1b32ca52!4m2!1d151.1958561!2d-33.866489?entry=ttu&g_ep=EgoyMDI0MDgyMy4wIKXMDSoASAFQAw%3D%3D")  
                 st.write(f"Cuisine: {row['Cuisine']}")
                 st.write(f"Price: {row['Price']}")
                 st.write(f"Location: {row['Location']}")
                 st.write(f"Award: {row['Award']}")
-                st.write(f"Phone: {row.get('Phone', 'N/A')}")
+                st.write(f"Phone: {row.get('PhoneNumber', 'N/A')}")  # Changed 'Phone' to 'PhoneNumber'
                 st.map(pd.DataFrame([[row['Latitude'], row['Longitude']]], columns=['lat', 'lon']))
 
 if __name__ == '__main__':

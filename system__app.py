@@ -12,9 +12,22 @@ def load_data():
 
 # Function to preprocess data for similarity calculation
 def preprocess_data(data):
-    data['Cuisine'].fillna('', inplace=True)
-    data['Price'].fillna('', inplace=True)
-    data['Location'].fillna('', inplace=True)
+# 1. Handling `PhoneNumber` (3.01% missing)
+# Impute missing values with 'Not Available' or a placeholder for phone numbers
+data['PhoneNumber'].fillna('Not Available', inplace=True)
+
+# 2. Handling `WebsiteUrl` (16.95% missing)
+# Impute missing values with 'No Website' or another appropriate value
+data['WebsiteUrl'].fillna('No Website', inplace=True)
+
+# 3. Handling `FacilitiesAndServices` (5.27% missing)
+# You can fill with 'None' if the missing value implies no facilities or services listed
+data['FacilitiesAndServices'].fillna('None', inplace=True)
+
+# 4. Handling `Description` (0.02% missing)
+# Since it's a very small percentage, you could drop the rows or fill with 'No Description'
+data['Description'].fillna('No Description', inplace=True)
+
     data['Combined'] = data['Cuisine'] + ' ' + data['Price'] + ' ' + data['Location']
     return data
 

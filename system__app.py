@@ -2,17 +2,23 @@ import streamlit as st
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
-from geopy.distance import great_circle
-import numpy as np
 import requests
 
-# Define currency conversion rates (example rates, should be updated or replaced with an API)
-CURRENCY_CONVERSIONS = {
-    'USD': 1.0,      # Base currency (USD)
-    'EUR': 0.93,     # Example conversion rate from USD to EUR
-    'GBP': 0.75,     # Example conversion rate from USD to GBP
-    # Add more currencies and conversion rates as needed
-}
+# API endpoint and key for currency conversion (example using exchangerate-api.com)
+API_URL = 'https://v6.exchangerate-api.com/v6/YOUR_API_KEY/latest/USD'
+
+# Function to get currency conversion rates
+def get_conversion_rates():
+    response = requests.get(API_URL)
+    data = response.json()
+    return data['conversion_rates']
+
+# Function to convert price to selected currency
+def convert_price(price, from_currency, to_currency, rates):
+    if from_currency == to_currency:
+        return price
+    rate = rates[to_currency] / rates[from_currency]
+    return price * rate
 
 # Function to load data
 @st.cache_data
@@ -34,11 +40,15 @@ def preprocess_data(data):
     return data
 
 # Function to recommend restaurants based on user preferences
-def recommend_restaurants(data, cuisine_preference, price_range, location_preference, top_n=5):
+def recommend_restaurants(data, cuisine_preference, min_price, max_price, location_preference, top_n=5):
+    # Convert price range to numerical values
+    data['PriceNumeric'] = data['Price'].replace('[\$,]', '', regex=True).astype(float)
+    
     # Filter restaurants based on user preferences
     filtered_data = data[
         (data['Cuisine'].str.contains(cuisine_preference, case=False)) &
-        (data['Price'].str.contains(price_range, case=False)) &
+        (data['PriceNumeric'] >= min_price) &
+        (data['PriceNumeric'] <= max_price) &
         (data['Location'].str.contains(location_preference, case=False))
     ]
     
@@ -70,19 +80,9 @@ def recommend_restaurants(data, cuisine_preference, price_range, location_prefer
     
     return recommended_restaurants
 
-# Function to filter restaurants by proximity to a given location
-def filter_by_location(data, user_lat, user_lon, radius_km=10):
-    def is_within_radius(row):
-        return great_circle((user_lat, user_lon), (row['Latitude'], row['Longitude'])).kilometers <= radius_km
-    
-    return data[data.apply(is_within_radius, axis=1)]
-
 # Function to format price based on selected currency
-def format_price(price, currency):
-    if currency in CURRENCY_CONVERSIONS:
-        converted_price = price * CURRENCY_CONVERSIONS[currency]
-        return f"{converted_price:.2f} {currency}"
-    return f"{price:.2f} USD"  # Default to USD if currency is not found
+def format_price(price, currency, rates):
+    return f"{price:.2f} {currency}"
 
 # Function to get latitude and longitude from location (Placeholder function)
 def get_lat_lon_from_location(location):
@@ -98,11 +98,18 @@ def main():
     data = load_data()
     data = preprocess_data(data)
     
+    # Get conversion rates
+    rates = get_conversion_rates()
+    
     # User Inputs
     st.sidebar.header('Customize Your Search')
     cuisine_preference = st.sidebar.selectbox("Choose Cuisine Type", data['Cuisine'].unique())
-    currency = st.sidebar.selectbox("Choose Currency", list(CURRENCY_CONVERSIONS.keys()))
-    price_range = st.sidebar.selectbox("Choose Price Range", data['Price'].unique())
+    currency = st.sidebar.selectbox("Choose Currency", list(rates.keys()))
+    
+    # User inputs for numerical price range
+    min_price = st.sidebar.number_input("Min Price", min_value=0.0, value=0.0)
+    max_price = st.sidebar.number_input("Max Price", min_value=0.0, value=100.0)
+    
     location_preference = st.sidebar.selectbox("Choose Location", data['Location'].unique())
     
     # User location input for proximity filter
@@ -114,12 +121,14 @@ def main():
     
     # Recommend Restaurants
     if st.sidebar.button("Get Recommendations"):
-        recommendations = recommend_restaurants(data, cuisine_preference, price_range, location_preference, top_n=5)
+        recommendations = recommend_restaurants(data, cuisine_preference, min_price, max_price, location_preference, top_n=5)
         if not recommendations.empty:
             for i, row in recommendations.iterrows():
+                price_numeric = float(row['Price'].replace('$', '').replace(',', '').strip())
+                price_converted = convert_price(price_numeric, 'USD', currency, rates)  # Assuming 'USD' as base currency
                 st.subheader(row['Name'])
                 st.write(f"Cuisine: {row['Cuisine']}")
-                st.write(f"Price: {format_price(float(row['Price'].replace('USD', '').replace(',', '').strip())), currency}")  # Assuming 'Price' contains 'USD'
+                st.write(f"Price: {format_price(price_converted, currency, rates)}")
                 st.write(f"Location: {row['Location']}")
                 st.write(f"Award: {row['Award']}")
                 st.write(f"Phone: {row.get('PhoneNumber', 'N/A')}")

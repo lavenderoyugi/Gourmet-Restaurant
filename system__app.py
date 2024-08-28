@@ -8,7 +8,7 @@ import numpy as np
 # Function to load data
 @st.cache_data
 def load_data():
-    file_path = 'https://raw.githubusercontent.com/Lovelylove03/Gourmet-Restaurant/main/datamission.csv'  
+    file_path = 'https://raw.githubusercontent.com/Lovelylove03/Gourmet-Restaurant/main/df_mich.csv'  
     data = pd.read_csv(file_path)
     return data
 
@@ -88,7 +88,7 @@ def main():
     location_preference = st.sidebar.selectbox("Choose Location", data['Location'].unique())
     
     # User location input for proximity filter
-    user_location = st.sidebar.text_input("Enter Your Location (e.g., Marseille, France)")
+    user_location = st.sidebar.text_input("Enter Your Town (e.g., Marseille, France)")
     
     if user_location:
         # Assume that you have a function to get latitude and longitude from user location

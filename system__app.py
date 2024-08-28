@@ -76,7 +76,7 @@ def main():
             for i, row in recommendations.iterrows():
                 st.subheader(row['Name'])
                 # Placeholder for images
-                 st.image("https://docs.developer.yelp.com/docs/fusion-intro")
+                st.image("https://docs.developer.yelp.com/docs/fusion-intro")
                 st.image("https://www.google.com/maps/search/Restaurants/@-33.8673317,151.1921221,15z/data=!3m1!4b1!4m7!2m6!3m5!2sGoogle+Sydney+-+Pirrama+Road!3s0x6b12ae37b47f5b37:0x8eaddfcd1b32ca52!4m2!1d151.1958561!2d-33.866489?entry=ttu&g_ep=EgoyMDI0MDgyMy4wIKXMDSoASAFQAw%3D%3D")  
                 st.write(f"Cuisine: {row['Cuisine']}")
                 st.write(f"Price: {row['Price']}")

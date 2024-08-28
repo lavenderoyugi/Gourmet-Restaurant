@@ -28,7 +28,7 @@ data['FacilitiesAndServices'].fillna('None', inplace=True)
 # Since it's a very small percentage, you could drop the rows or fill with 'No Description'
 data['Description'].fillna('No Description', inplace=True)
 
-    data['Combined'] = data['Cuisine'] + ' ' + data['Price'] + ' ' + data['Location']
+data['Combined'] = data['Cuisine'] + ' ' + data['Price'] + ' ' + data['Location']
     return data
 
 # Function to recommend restaurants based on user preferences

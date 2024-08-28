@@ -29,7 +29,7 @@ data['FacilitiesAndServices'].fillna('None', inplace=True)
 data['Description'].fillna('No Description', inplace=True)
 
 data['Combined'] = data['Cuisine'] + ' ' + data['Price'] + ' ' + data['Location']
-    return data
+return data
 
 # Function to recommend restaurants based on user preferences
 def recommend_restaurants(data, cuisine_preference, price_range, location_preference, top_n=5):
